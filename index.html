@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Budget Simulator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .slider-input { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 5px; background: #e2e8f0; outline: none; }
+        .slider-input::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #2563eb; cursor: pointer; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+    <div class="max-w-6xl mx-auto px-4 py-12">
+        <header class="mb-12">
+            <h1 class="text-4xl font-black text-slate-800 tracking-tight">CITY BUDGET SIMULATOR</h1>
+            <p class="text-slate-500 text-lg mt-2 font-medium">FY2025 Spending Plan: Adjust the sliders to reallocate funds.</p>
+        </header>
+
+        <!-- Dashboard -->
+        <div class="sticky top-4 z-50 bg-white border border-slate-200 shadow-2xl rounded-2xl p-6 mb-12 grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Est. Revenue</p>
+                <p id="total-revenue" class="text-2xl font-mono font-bold text-emerald-600">$0</p>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Your Spending</p>
+                <p id="total-spending" class="text-2xl font-mono font-bold text-blue-600">$0</p>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Balance</p>
+                <p id="budget-diff" class="text-2xl font-mono font-bold">$0</p>
+            </div>
+            <div id="status-badge" class="text-center py-3 rounded-xl font-black text-sm uppercase tracking-tighter transition-all">
+                LOADING...
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-12">
+            
+            <!-- Left: Controls -->
+            <div class="lg:col-span-3 space-y-4" id="slider-container">
+                <!-- Sliders injected here -->
+            </div>
+
+            <!-- Right: Visuals -->
+            <div class="lg:col-span-2 space-y-8">
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 sticky top-40">
+                    <h3 class="text-lg font-bold mb-6 flex items-center">
+                        <span class="w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
+                        Spending Allocation
+                    </h3>
+                    <canvas id="budgetChart"></canvas>
+                    
+                    <div class="mt-8 pt-6 border-t border-slate-100 text-sm text-slate-500 italic">
+                        "100%" represents the Mayor's proposed FY25 budget. Reducing a slider translates to fewer staff, deferred maintenance, or reduced service hours in that area.
+                    </div>
+                    
+                    <button onclick="window.location.reload()" class="mt-6 w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl transition-colors">
+                        Reset to Default
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let budgetData = { revenue: 0, expenses: [] };
+        let myChart;
+
+        const formatCurr = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(num);
+
+        async function init() {
+            try {
+                const response = await fetch('data.json');
+                budgetData = await response.json();
+                
+                // Set initial "current" values
+                budgetData.expenses.forEach(item => {
+                    item.current = item.amount;
+                });
+
+                renderSliders();
+                renderChart();
+                updateUI();
+            } catch (e) {
+                document.getElementById('slider-container').innerHTML = `<p class="text-red-500">Error loading budget data. Please ensure data.json is in the same folder.</p>`;
+            }
+        }
+
+        function renderSliders() {
+            const container = document.getElementById('slider-container');
+            container.innerHTML = '';
+
+            budgetData.expenses.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = "bg-white p-6 rounded-xl border border-slate-200 hover:border-blue-300 transition-colors shadow-sm";
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <label class="font-bold text-slate-700 tracking-tight leading-tight uppercase text-xs w-2/3">${item.dept}</label>
+                        <div class="text-right">
+                            <p id="label-${index}" class="font-mono font-bold text-blue-600">${formatCurr(item.amount)}</p>
+                            <p id="perc-${index}" class="text-[10px] font-bold text-slate-400">100% OF REQUEST</p>
+                        </div>
+                    </div>
+                    <input type="range" min="0" max="150" value="100" step="5"
+                        class="slider-input" 
+                        oninput="updateValue(${index}, this.value)">
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function updateValue(index, percent) {
+            const item = budgetData.expenses[index];
+            item.current = item.amount * (percent / 100);
+            
+            document.getElementById(`label-${index}`).innerText = formatCurr(item.current);
+            document.getElementById(`perc-${index}`).innerText = `${percent}% OF REQUEST`;
+            
+            updateUI();
+            updateChart();
+        }
+
+        function updateUI() {
+            const totalSpending = budgetData.expenses.reduce((sum, item) => sum + item.current, 0);
+            const diff = budgetData.revenue - totalSpending;
+
+            document.getElementById('total-revenue').innerText = formatCurr(budgetData.revenue);
+            document.getElementById('total-spending').innerText = formatCurr(totalSpending);
+            
+            const diffEl = document.getElementById('budget-diff');
+            diffEl.innerText = formatCurr(diff);
+            
+            const badge = document.getElementById('status-badge');
+            if (diff >= 0) {
+                diffEl.style.color = "#059669";
+                badge.innerText = "Budget Balanced";
+                badge.className = "text-center py-3 rounded-xl font-black text-sm uppercase tracking-tighter bg-emerald-100 text-emerald-700 border border-emerald-200";
+            } else {
+                diffEl.style.color = "#dc2626";
+                badge.innerText = "Deficit Found";
+                badge.className = "text-center py-3 rounded-xl font-black text-sm uppercase tracking-tighter bg-red-100 text-red-700 border border-red-200";
+            }
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('budgetChart').getContext('2d');
+            myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: budgetData.expenses.map(d => d.dept),
+                    datasets: [{
+                        data: budgetData.expenses.map(d => d.current),
+                        backgroundColor: [
+                            '#1e293b', '#334155', '#475569', '#2563eb', '#3b82f6', '#60a5fa', 
+                            '#0ea5e9', '#06b6d4', '#14b8a6', '#10b981', '#22c55e', '#84cc16'
+                        ],
+                        borderWidth: 2,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function updateChart() {
+            myChart.data.datasets[0].data = budgetData.expenses.map(item => item.current);
+            myChart.update();
+        }
+
+        init();
+    </script>
+</body>
+</html>
