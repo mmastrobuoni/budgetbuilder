@@ -1,0 +1,362 @@
+[
+  {
+    "comparison_department": "Assessor",
+    "fiscal_year": 2024,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 4.0,
+    "highest_reported_count": 4.875
+  },
+  {
+    "comparison_department": "Council on Aging",
+    "fiscal_year": 2024,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 4.0,
+    "highest_reported_count": 5.0
+  },
+  {
+    "comparison_department": "Council on Aging",
+    "fiscal_year": 2025,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 3.5,
+    "highest_reported_count": 4.0
+  },
+  {
+    "comparison_department": "Council on Aging",
+    "fiscal_year": 2026,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 3.0,
+    "highest_reported_count": 4.0
+  },
+  {
+    "comparison_department": "DPW Combined",
+    "fiscal_year": 2021,
+    "observations": 2,
+    "distinct_values": 2,
+    "lowest_reported_count": 38.0,
+    "highest_reported_count": 45.0
+  },
+  {
+    "comparison_department": "Diversity, Equity & Inclusion",
+    "fiscal_year": 2026,
+    "observations": 4,
+    "distinct_values": 2,
+    "lowest_reported_count": 1.0,
+    "highest_reported_count": 1.5
+  },
+  {
+    "comparison_department": "Elections",
+    "fiscal_year": 2022,
+    "observations": 2,
+    "distinct_values": 2,
+    "lowest_reported_count": 3.0,
+    "highest_reported_count": 4.0
+  },
+  {
+    "comparison_department": "Elections",
+    "fiscal_year": 2025,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 2.5,
+    "highest_reported_count": 3.0
+  },
+  {
+    "comparison_department": "Executive Office",
+    "fiscal_year": 2023,
+    "observations": 2,
+    "distinct_values": 2,
+    "lowest_reported_count": 5.0,
+    "highest_reported_count": 7.0
+  },
+  {
+    "comparison_department": "Executive Office",
+    "fiscal_year": 2024,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 6.0,
+    "highest_reported_count": 6.43
+  },
+  {
+    "comparison_department": "Executive Office",
+    "fiscal_year": 2025,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 6.29,
+    "highest_reported_count": 6.43
+  },
+  {
+    "comparison_department": "Facilities",
+    "fiscal_year": 2025,
+    "observations": 2,
+    "distinct_values": 2,
+    "lowest_reported_count": 3.5,
+    "highest_reported_count": 4.0
+  },
+  {
+    "comparison_department": "Finance/Procurement",
+    "fiscal_year": 2024,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 7.0,
+    "highest_reported_count": 8.0
+  },
+  {
+    "comparison_department": "Fire",
+    "fiscal_year": 2023,
+    "observations": 2,
+    "distinct_values": 2,
+    "lowest_reported_count": 122.0,
+    "highest_reported_count": 123.0
+  },
+  {
+    "comparison_department": "Fire",
+    "fiscal_year": 2024,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 120.0,
+    "highest_reported_count": 123.0
+  },
+  {
+    "comparison_department": "Fire",
+    "fiscal_year": 2025,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 122.5,
+    "highest_reported_count": 123.0
+  },
+  {
+    "comparison_department": "Fire",
+    "fiscal_year": 2026,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 120.5,
+    "highest_reported_count": 123.0
+  },
+  {
+    "comparison_department": "Health and Human Services",
+    "fiscal_year": 2023,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 9.0,
+    "highest_reported_count": 10.0
+  },
+  {
+    "comparison_department": "Health and Human Services",
+    "fiscal_year": 2024,
+    "observations": 3,
+    "distinct_values": 3,
+    "lowest_reported_count": 10.0,
+    "highest_reported_count": 11.0
+  },
+  {
+    "comparison_department": "Health and Human Services",
+    "fiscal_year": 2025,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 10.0,
+    "highest_reported_count": 11.0
+  },
+  {
+    "comparison_department": "Health and Human Services",
+    "fiscal_year": 2026,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 11.0,
+    "highest_reported_count": 26.15
+  },
+  {
+    "comparison_department": "Highway",
+    "fiscal_year": 2026,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 28.0,
+    "highest_reported_count": 29.0
+  },
+  {
+    "comparison_department": "Human Resources",
+    "fiscal_year": 2024,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 2.0,
+    "highest_reported_count": 2.75
+  },
+  {
+    "comparison_department": "Human Resources",
+    "fiscal_year": 2027,
+    "observations": 2,
+    "distinct_values": 2,
+    "lowest_reported_count": 3.5,
+    "highest_reported_count": 4.0
+  },
+  {
+    "comparison_department": "Law",
+    "fiscal_year": 2023,
+    "observations": 2,
+    "distinct_values": 2,
+    "lowest_reported_count": 3.0,
+    "highest_reported_count": 4.0
+  },
+  {
+    "comparison_department": "Law",
+    "fiscal_year": 2024,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 3.0,
+    "highest_reported_count": 4.0
+  },
+  {
+    "comparison_department": "Library",
+    "fiscal_year": 2024,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 22.0,
+    "highest_reported_count": 37.0
+  },
+  {
+    "comparison_department": "Library",
+    "fiscal_year": 2025,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 36.0,
+    "highest_reported_count": 37.0
+  },
+  {
+    "comparison_department": "Library",
+    "fiscal_year": 2026,
+    "observations": 3,
+    "distinct_values": 3,
+    "lowest_reported_count": 30.0,
+    "highest_reported_count": 39.0
+  },
+  {
+    "comparison_department": "Library",
+    "fiscal_year": 2027,
+    "observations": 2,
+    "distinct_values": 2,
+    "lowest_reported_count": 30.0,
+    "highest_reported_count": 41.0
+  },
+  {
+    "comparison_department": "Medford Community Media",
+    "fiscal_year": 2021,
+    "observations": 2,
+    "distinct_values": 2,
+    "lowest_reported_count": 2.0,
+    "highest_reported_count": 5.0
+  },
+  {
+    "comparison_department": "PDS",
+    "fiscal_year": 2023,
+    "observations": 2,
+    "distinct_values": 2,
+    "lowest_reported_count": 5.2,
+    "highest_reported_count": 7.0
+  },
+  {
+    "comparison_department": "PDS",
+    "fiscal_year": 2024,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 8.0,
+    "highest_reported_count": 11.0
+  },
+  {
+    "comparison_department": "PDS",
+    "fiscal_year": 2025,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 11.0,
+    "highest_reported_count": 15.0
+  },
+  {
+    "comparison_department": "PDS",
+    "fiscal_year": 2026,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 10.0,
+    "highest_reported_count": 15.0
+  },
+  {
+    "comparison_department": "PDS",
+    "fiscal_year": 2027,
+    "observations": 2,
+    "distinct_values": 2,
+    "lowest_reported_count": 11.0,
+    "highest_reported_count": 15.0
+  },
+  {
+    "comparison_department": "Parking",
+    "fiscal_year": 2025,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 11.5,
+    "highest_reported_count": 12.0
+  },
+  {
+    "comparison_department": "Police",
+    "fiscal_year": 2021,
+    "observations": 2,
+    "distinct_values": 2,
+    "lowest_reported_count": 120.0,
+    "highest_reported_count": 122.0
+  },
+  {
+    "comparison_department": "Police",
+    "fiscal_year": 2024,
+    "observations": 3,
+    "distinct_values": 3,
+    "lowest_reported_count": 122.0,
+    "highest_reported_count": 125.0
+  },
+  {
+    "comparison_department": "Police",
+    "fiscal_year": 2026,
+    "observations": 3,
+    "distinct_values": 3,
+    "lowest_reported_count": 126.0,
+    "highest_reported_count": 130.0
+  },
+  {
+    "comparison_department": "Traffic Supervisors",
+    "fiscal_year": 2021,
+    "observations": 2,
+    "distinct_values": 2,
+    "lowest_reported_count": 24.0,
+    "highest_reported_count": 25.0
+  },
+  {
+    "comparison_department": "Traffic Supervisors",
+    "fiscal_year": 2023,
+    "observations": 2,
+    "distinct_values": 2,
+    "lowest_reported_count": 25.0,
+    "highest_reported_count": 26.0
+  },
+  {
+    "comparison_department": "Veteran Services",
+    "fiscal_year": 2024,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 1.5,
+    "highest_reported_count": 2.0
+  },
+  {
+    "comparison_department": "Veteran Services",
+    "fiscal_year": 2025,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 1.5,
+    "highest_reported_count": 2.0
+  },
+  {
+    "comparison_department": "Water and Sewer",
+    "fiscal_year": 2026,
+    "observations": 3,
+    "distinct_values": 2,
+    "lowest_reported_count": 19.0,
+    "highest_reported_count": 20.0
+  }
+]
