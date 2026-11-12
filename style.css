@@ -6,3 +6,5 @@
 .flow-node{cursor:pointer}.flow-node:hover path,.flow-node:focus path{opacity:.65}.flow-node:focus{outline:none}.flow-node:focus text{text-decoration:underline}#extra{flex-wrap:wrap;gap:8px}.sankey-svg{min-width:900px}#chart{overflow-x:auto}
 
 .flow-controls{display:grid;grid-template-columns:1fr 1fr;gap:20px}.flow-controls button{display:flex;justify-content:space-between;gap:12px;width:100%;text-align:left;margin:6px 0}.flow-controls strong{white-space:nowrap}@media(max-width:700px){.flow-controls{grid-template-columns:1fr}}
+
+.flow-ribbon{cursor:pointer}.flow-ribbon:hover{opacity:.5}

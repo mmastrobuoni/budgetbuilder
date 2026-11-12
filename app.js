@@ -22,13 +22,6 @@ function treemap(){titles(state.flow==='expense'?'The shape of spending':'The so
 function split(a,x,y,w,h){if(a.length===1){tiles.push({...a[0],x,y,w,h});return}let tot=a.reduce((s,d)=>s+d.value,0),k=1,v=a[0].value;while(k<a.length-1&&v<tot/2){v+=a[k++].value}let ratio=v/tot;if(w>=h){split(a.slice(0,k),x,y,w*ratio,h);split(a.slice(k),x+w*ratio,y,w*(1-ratio),h)}else{split(a.slice(0,k),x,y,w,h*ratio);split(a.slice(k),x,y+h*ratio,w,h*(1-ratio))}}split(positive,0,0,1080,500);
 $('chart').innerHTML=`<svg viewBox="0 0 1080 500" role="img" aria-label="${esc(state.flow)} treemap">${tiles.map((t,i)=>{let font=t.w<130?11:16,limit=Math.max(7,Math.floor(t.w/(font*.56))),words=t.name.split(' '),lines=[''];for(let w of words){let j=lines.length-1;if((lines[j]+' '+w).length>limit)lines.push(w);else lines[j]+=(lines[j]?' ':'')+w}return `<g class="trect" tabindex="0" role="button" aria-label="${esc(t.name)}: ${money(t.value)}" data-name="${esc(t.name)}"><title>${esc(t.name)} · ${money(t.value)} · ${(100*t.value/sum).toFixed(1)}%</title><rect x="${t.x+2}" y="${t.y+2}" width="${Math.max(0,t.w-4)}" height="${Math.max(0,t.h-4)}" rx="4" fill="${palette[i%palette.length]}"/>${t.w>80&&t.h>50?lines.slice(0,Math.max(1,Math.min(3,Math.floor((t.h-36)/19)))).map((l,j)=>`<text x="${t.x+12}" y="${t.y+25+j*19}" fill="white" font-size="${font}" font-weight="600">${esc(l)}</text>`).join('')+`<text x="${t.x+12}" y="${t.y+t.h-13}" fill="#fff" font-size="12">${short(t.value)} · ${(100*t.value/sum).toFixed(1)}%</text>`:''}</g>`}).join('')}</svg><p class="helper">Small tiles retain exact values on hover, keyboard focus, and in “View the numbers.” ${g.some(x=>x.value<0)?'Negative amounts are omitted from tile areas; use the table for signed values.':''}</p>`;
 $('chart').querySelectorAll('[data-name]').forEach(el=>{let fn=()=>{const name=el.dataset.name,key=state.flow==='expense'?'expense_category':'object_name',parts=grouped(data().filter(r=>r[groupkey()]===name),key);$('detail').innerHTML=`<strong>${esc(name)}</strong><p>${parts.map(p=>`${esc(p.name)}: ${money(p.value)}`).join(' · ')}</p><button id="follow">See this over time →</button>`;$('follow').onclick=()=>{state.department=name;state.tab='trends';render()}};el.onclick=fn;el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn()}}})}
-function sankeyLayout(rev,exp,bandHeight=400){
- const rt=rev.reduce((s,x)=>s+x.value,0),et=exp.reduce((s,x)=>s+x.value,0),scale=bandHeight/Math.max(rt,et,1),gap=10;
- const span=a=>a.reduce((s,x)=>s+Math.max(x.value*scale,48),0)+Math.max(0,a.length-1)*gap;
- const height=Math.max(span(rev),span(exp),bandHeight)+80,top=(height-bandHeight)/2;
- function side(a){let outer=(height-span(a))/2,inner=top;return a.map(x=>{const h=x.value*scale,slot=Math.max(h,48),node={...x,h,innerY:inner,outerY:outer+(slot-h)/2,labelY:outer+slot/2};outer+=slot+gap;inner+=h;return node})}
- return {revenue:side(rev),expense:side(exp),rt,et,scale,height,top,bandHeight};
-}
 const flowExpanded=new Set();
 function flowTree(records,side){
  const keys=side==='revenue'?['revenue_group','object_name']:['original_group','comparison_department','expense_category'];
@@ -38,32 +31,56 @@ function flowTree(records,side){
  return {...g,id,path:next,depth,children,side};
  })}return build(records,0,[]);
 }
-function visibleFlows(tree){return tree.flatMap(n=>flowExpanded.has(n.id)&&n.children.length?visibleFlows(n.children):[n]);}
+// Keep every ancestor visible; expansion appends a hierarchy column.
+function flowColumns(tree){
+ const columns=[tree.filter(n=>n.value>0)];
+ while(columns[columns.length-1].some(n=>flowExpanded.has(n.id)&&n.children.length)){
+  columns.push(columns[columns.length-1].flatMap(n=>flowExpanded.has(n.id)?n.children.filter(c=>c.value>0).map(c=>({...c,parentId:n.id})):[]));
+ }
+ return columns;
+}
 function flows(){
- titles('Follow the dollars','Click a band or category to expand it. Spending: function → department → prime account. Revenue: category → source detail.');
+ titles('Follow the dollars','Click a category to add its breakdown in another column. Parent categories stay visible. Expand spending through function → department → prime account; revenue through category → source detail.');
  const trees={revenue:flowTree(data(state.year,'revenue'),'revenue'),expense:flowTree(data(state.year,'expense'),'expense')};
- const revenue=visibleFlows(trees.revenue),expense=visibleFlows(trees.expense);
- const expanded=[];function walk(ns){ns.forEach(n=>{if(flowExpanded.has(n.id)){expanded.push(n);walk(n.children)}})}walk(trees.revenue);walk(trees.expense);
- $('extra').innerHTML='<button id="collapseFlows">Collapse all</button>'+expanded.map((n,i)=>`<button data-collapse="${i}" title="Collapse this branch">− ${esc(n.path.join(' / '))}</button>`).join('');
+ if(!trees.revenue.length||!trees.expense.length)return empty('Both revenue and expense figures are needed. Try FY22–FY25 actuals or FY22–FY27 budgets.');
+ const columns={revenue:flowColumns(trees.revenue),expense:flowColumns(trees.expense)};
+ const all=[...columns.revenue.flat(),...columns.expense.flat()];
+ function negative(ns){return ns.some(n=>n.value<0||negative(n.children))}
+ if(negative(trees.revenue)||negative(trees.expense))return empty('This selection includes negative net categories. Use “View the numbers” for signed amounts; a positive-flow Sankey would misrepresent them.');
+ const expanded=all.filter(n=>flowExpanded.has(n.id)&&n.children.length);
+ function collapse(n){flowExpanded.delete(n.id);n.children.forEach(collapse)}
+ $('extra').innerHTML='<button id="collapseFlows">Collapse all</button>'+expanded.map((n,i)=>`<button data-collapse="${i}">− ${esc(n.path.join(' / '))}</button>`).join('');
  $('collapseFlows').onclick=()=>{flowExpanded.clear();flows()};
- $('extra').querySelectorAll('[data-collapse]').forEach(b=>b.onclick=()=>{flowExpanded.delete(expanded[+b.dataset.collapse].id);flows()});
- if(!revenue.length||!expense.length)return empty('Both revenue and expense figures are needed. Try FY22–FY25 actuals or FY22–FY27 budgets.');
- if([...revenue,...expense].some(x=>x.value<0))return empty('This selection includes negative net categories. Use “View the numbers” for the signed amounts; a positive-flow Sankey would misrepresent them.');
- const rev=revenue.filter(x=>x.value>0),exp=expense.filter(x=>x.value>0);if(!rev.length||!exp.length)return empty('No positive flows available for this selection.');
- const L=sankeyLayout(rev,exp),sv=[];
- function labelLines(name){let lines=[''];for(const word of name.split(' ')){let i=lines.length-1;if((lines[i]+' '+word).trim().length>28&&lines[i])lines.push(word);else lines[i]+=(lines[i]?' ':'')+word}return lines}
- function side(nodes,left){nodes.forEach((n,i)=>{const color=palette[(left?trees.revenue:trees.expense).findIndex(t=>t.name===n.path[0])%palette.length],x1=left?245:630,x2=left?470:855,y1=left?n.outerY:n.innerY,y2=left?n.innerY:n.outerY,mid=(x1+x2)/2;
- const path=`M${x1},${y1} C${mid},${y1} ${mid},${y2} ${x2},${y2} L${x2},${y2+n.h} C${mid},${y2+n.h} ${mid},${y1+n.h} ${x1},${y1+n.h} Z`;
- sv.push(`<g class="flow-node" tabindex="0" role="button" data-flow-side="${left?'revenue':'expense'}" data-flow-index="${i}" aria-label="${esc(n.path.join(' / '))}: ${money(n.value)}. ${n.children.length?'Expand':'View detail'}"><path d="${path}" fill="${color}" opacity=".3"><title>${esc(n.name)}: ${money(n.value)}</title></path><rect x="${left?235:855}" y="${n.outerY}" width="10" height="${n.h}" fill="${color}"/>`);
- const lines=labelLines((n.children.length?'＋ ':'')+n.name),tx=left?222:878,start=n.labelY-(lines.length*15+14)/2+12;
- sv.push(`<text x="${tx}" y="${start}" text-anchor="${left?'end':'start'}" font-size="12" fill="#142d46">${lines.map((l,j)=>`<tspan x="${tx}" dy="${j?15:0}">${esc(l)}</tspan>`).join('')}<tspan x="${tx}" dy="16" fill="#62717c">${short(n.value)}</tspan></text></g>`);
- })}side(L.revenue,true);side(L.expense,false);
- $('chart').innerHTML=`<div class="sankey-totals"><span>Revenue <strong>${money(L.rt)}</strong></span><span>Expenses <strong>${money(L.et)}</strong></span></div><svg class="sankey-svg" viewBox="0 0 1120 ${L.height}" role="group" aria-label="General Fund flows on an identical dollar scale: revenue ${money(L.rt)}, expenses ${money(L.et)}">${sv.join('')}<rect x="470" y="${L.top}" width="160" height="${L.bandHeight}" fill="#142d46"/><text x="550" y="${L.top+190}" text-anchor="middle" fill="white" font-size="18">General Fund</text><text x="550" y="${L.top+216}" text-anchor="middle" fill="#b9d9db" font-size="12">FY${state.year} ${state.measure}</text></svg>`;
- $('chart').insertAdjacentHTML('beforeend',`<div class="flow-controls">${['revenue','expense'].map(side=>`<section><h3>${side==='revenue'?'Revenue':'Spending'} categories</h3>${L[side].map((n,i)=>`<button class="quiet" data-flow-side="${side}" data-flow-index="${i}"><span>${n.children.length?'＋ Expand':'View'} ${esc(n.path.join(' → '))}</span><strong>${short(n.value)}</strong></button>`).join('')}</section>`).join('')}</div>`);
- $('chart').querySelectorAll('[data-flow-index]').forEach(el=>{const activate=()=>{const n=L[el.dataset.flowSide][+el.dataset.flowIndex];if(n.children.length){flowExpanded.add(n.id);flows()}else{$('detail').textContent=n.path.join(' → ')+': '+money(n.value)+'. This is the finest detail available in the current dataset.'}};el.onclick=activate;el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();activate()}}});
- const delta=L.et-L.rt,percent=100*Math.abs(delta)/Math.max(L.rt,L.et);
- $('detail').textContent=`${Math.abs(delta)<.005?'Revenue and expenses are equal.':`Expenses are ${money(Math.abs(delta))} ${delta>0?'higher':'lower'} than revenue (${percent.toFixed(2)}% of the larger total).`} The total band thickness at each side of the General Fund represents dollars only; category spacing adds no apparent volume. This is a difference between published book totals, not a verified operating surplus or deficit. Revenue sources are not earmarked to specific departments.`;
- exportRows=[...[...rev,...exp].map(x=>({side:x.side,path:x.path.join(' / '),category:x.name,amount:x.value}))];
+ $('extra').querySelectorAll('[data-collapse]').forEach(b=>b.onclick=()=>{collapse(expanded[+b.dataset.collapse]);flows()});
+ const rt=trees.revenue.reduce((s,n)=>s+n.value,0),et=trees.expense.reduce((s,n)=>s+n.value,0),scale=400/Math.max(rt,et,1);
+ if(!rt||!et)return empty('No positive flows available for this selection.');
+ const span=ns=>ns.reduce((s,n)=>s+Math.max(64,n.value*scale)+12,0)-12;
+ const height=Math.max(400,...Object.values(columns).flat().map(span))+100;
+ const step=290,center=columns.revenue.length*step+40,width=(columns.revenue.length+columns.expense.length)*step+240,top=(height-400)/2;
+ const positions=new Map(),sv=[],links=[];
+ const headings={revenue:['Revenue categories','Revenue detail'],expense:['Spending functions','Departments','Prime accounts']};
+ for(const side of ['revenue','expense'])columns[side].forEach((ns,depth)=>{
+  const x=side==='revenue'?center-(depth+1)*step:center+170+(depth+1)*step;
+  let y=(height-span(ns))/2;
+  sv.push(`<text x="${x}" y="24" text-anchor="${side==='revenue'?'start':'end'}" font-size="13" font-weight="700">${headings[side][depth]}</text>`);
+  ns.forEach(n=>{const slot=Math.max(64,n.value*scale);positions.set(n.id,{...n,x,y:y+(slot-n.value*scale)/2,h:n.value*scale,labelY:y+slot/2});y+=slot+12});
+ });
+ function ribbon(x1,y1,x2,y2,h,color,index){const mid=(x1+x2)/2;return `<path class="flow-ribbon" data-flow-index="${index}" d="M${x1},${y1} C${mid},${y1} ${mid},${y2} ${x2},${y2} L${x2},${y2+h} C${mid},${y2+h} ${mid},${y1+h} ${x1},${y1+h} Z" fill="${color}" opacity=".22"><title>${esc(all[index].path.join(' / '))}: ${money(all[index].value)}</title></path>`}
+ const offsets=new Map();let ri=top,ei=top;
+ all.forEach((n,i)=>{
+  const p=positions.get(n.id),left=n.side==='revenue',rootIndex=trees[n.side].findIndex(t=>t.name===n.path[0]),color=palette[rootIndex%palette.length];
+  if(n.depth===0){links.push(left?ribbon(p.x+10,p.y,center,ri,p.h,color,i):ribbon(center+170,ei,p.x,p.y,p.h,color,i));if(left)ri+=p.h;else ei+=p.h}
+  else {const parent=positions.get(n.parentId),offset=offsets.get(parent.id)||0;links.push(left?ribbon(p.x+10,p.y,parent.x,parent.y+offset,p.h,color,i):ribbon(parent.x+10,parent.y+offset,p.x,p.y,p.h,color,i));offsets.set(parent.id,offset+p.h)}
+  const isOpen=flowExpanded.has(n.id),action=n.children.length?(isOpen?'Collapse':'Expand'):'View detail',tx=left?p.x+16:p.x-6,anchor=left?'start':'end';
+  let lines=[''];for(const word of n.name.split(' ')){const j=lines.length-1;if((lines[j]+' '+word).trim().length>28&&lines[j])lines.push(word);else lines[j]+=(lines[j]?' ':'')+word}
+  sv.push(`<g class="flow-node" tabindex="0" role="button" data-flow-index="${i}" ${n.children.length?`aria-expanded="${isOpen}"`:''} aria-label="${action} ${esc(n.path.join(' / '))}: ${money(n.value)}"><title>${esc(n.path.join(' / '))}: ${money(n.value)}</title><rect x="${p.x}" y="${p.y}" width="10" height="${p.h}" fill="${color}"/><text x="${tx}" y="${p.labelY-lines.length*8}" text-anchor="${anchor}" font-size="12" fill="#142d46" paint-order="stroke" stroke="white" stroke-width="4" stroke-linejoin="round">${lines.map((l,j)=>`<tspan x="${tx}" dy="${j?16:0}">${j===0&&n.children.length?(isOpen?'− ':'＋ '):''}${esc(l)}</tspan>`).join('')}<tspan x="${tx}" dy="17" fill="#62717c">${short(n.value)}</tspan></text></g>`);
+ });
+ $('chart').innerHTML=`<div class="sankey-totals"><span>Revenue <strong>${money(rt)}</strong></span><span>Expenses <strong>${money(et)}</strong></span></div><p class="helper">Scroll horizontally to explore added columns. Only expanded branches continue into the next column.</p><svg class="sankey-svg" style="min-width:${width}px" viewBox="0 0 ${width} ${height}" role="group" aria-label="General Fund flows with persistent parent columns">${links.join('')}${sv.join('')}<rect x="${center}" y="${top}" width="170" height="400" fill="#142d46"/><text x="${center+85}" y="${top+190}" text-anchor="middle" fill="white" font-size="18">General Fund</text><text x="${center+85}" y="${top+216}" text-anchor="middle" fill="#b9d9db" font-size="12">FY${state.year} ${state.measure}</text></svg>`;
+ $('chart').insertAdjacentHTML('beforeend',`<div class="flow-controls">${['revenue','expense'].map(side=>`<section><h3>${side==='revenue'?'Revenue':'Spending'} categories</h3>${all.map((n,i)=>n.side===side?`<button class="quiet" data-flow-index="${i}" ${n.children.length?`aria-expanded="${flowExpanded.has(n.id)}"`:''}><span>${n.children.length?(flowExpanded.has(n.id)?'− Collapse':'＋ Expand'):'View'} ${esc(n.path.join(' → '))}</span><strong>${short(n.value)}</strong></button>`:'').join('')}</section>`).join('')}</div>`);
+ $('chart').querySelectorAll('[data-flow-index]').forEach(el=>{const activate=()=>{const n=all[+el.dataset.flowIndex];if(n.children.length){if(flowExpanded.has(n.id))collapse(n);else flowExpanded.add(n.id);flows()}else $('detail').textContent=n.path.join(' → ')+': '+money(n.value)+'. This is the finest detail available in the current dataset.'};el.onclick=activate;if(el.tagName.toLowerCase()!=='button')el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();activate()}}});
+ const delta=et-rt;
+ $('detail').textContent=`${Math.abs(delta)<.005?'Revenue and expenses are equal.':`Expenses are ${money(Math.abs(delta))} ${delta>0?'higher':'lower'} than revenue.`} All columns use the same dollar scale. Parent and child amounts overlap: do not add them together. This is a difference between published book totals, not a verified operating surplus or deficit. Revenue sources are not earmarked to specific departments.`;
+ exportRows=all.map(n=>({side:n.side,level:n.depth,path:n.path.join(' / '),category:n.name,amount:n.value,overlaps_parent:n.depth>0}));
 }
 function trends(){let key=groupkey(),all=state.flow==='expense'?'All departments':'All revenue sources';if(state.department==='All departments'&&state.flow==='revenue')state.department=all;const opts=[all,...new Set(rows.filter(r=>r.flow===state.flow).map(r=>r[key]))].sort((a,b)=>a===all?-1:b===all?1:a.localeCompare(b));if(!opts.includes(state.department))state.department=all;titles('Follow a category over time','Like-for-like figures in nominal dollars. FY26 actuals are excluded because their cutoff is unverified. Missing figures are left as gaps.');$('extra').innerHTML=`<label>${state.flow==='expense'?'Department':'Revenue source'}<select id="department">${makeOptions(opts,state.department)}</select></label>`;$('department').onchange=e=>{state.department=e.target.value;trends()};let years=state.measure==='actual'?[2020,2021,2022,2023,2024,2025]:[2020,2021,2022,2023,2024,2025,2026,2027];let pts=years.map(y=>{let a=data(y).filter(r=>state.department===all||r[key]===state.department);return {year:y,value:a.length?a.reduce((s,r)=>s+r.amount,0):null}});exportRows=pts;const vals=pts.filter(x=>x.value!=null);if(!vals.length)return empty('No historical figures for this category.');let max=Math.max(...vals.map(x=>x.value),1),min=Math.min(0,...vals.map(x=>x.value)),range=max-min||1,x=i=>80+i*900/(years.length-1),y=v=>330-(v-min)/range*270;
 $('chart').innerHTML=`<svg viewBox="0 0 1040 400" role="img" aria-label="${esc(state.department)} historical trend">${[0,.25,.5,.75,1].map(t=>`<line x1="80" x2="980" y1="${y(min+range*t)}" y2="${y(min+range*t)}" stroke="#e0e7e8"/><text x="67" y="${y(min+range*t)+4}" text-anchor="end" fill="#62717c" font-size="12">${short(min+range*t)}</text>`).join('')}${pts.map((p,i)=>p.value!=null?`${i&&pts[i-1].value!=null?`<line x1="${x(i-1)}" y1="${y(pts[i-1].value)}" x2="${x(i)}" y2="${y(p.value)}" stroke="#007e80" stroke-width="3"/>`:''}<circle cx="${x(i)}" cy="${y(p.value)}" r="6" fill="#007e80"><title>FY${p.year}: ${money(p.value)}</title></circle><text x="${x(i)}" y="${y(p.value)-16}" text-anchor="middle" fill="#142d46" font-size="12">${short(p.value)}</text>`:'').join('')}${pts.map((p,i)=>`<text x="${x(i)}" y="365" text-anchor="middle" fill="#62717c" font-size="12">FY${p.year}</text>`).join('')}</svg>`;let first=vals[0],last=vals[vals.length-1];$('detail').textContent=`${state.department} · FY${first.year}: ${money(first.value)} → FY${last.year}: ${money(last.value)}. Change: ${money(last.value-first.value)}${first.value?' ('+((last.value/first.value-1)*100).toFixed(1)+'%)':''}. Names are normalized; changes in duties or accounting may affect this comparison.`}
